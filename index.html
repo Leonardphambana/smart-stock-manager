@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Smart Stock Manager</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+
+        <div class="header-top">
+
+            <h1>Smart Stock Manager</h1>
+
+            <nav>
+
+                <a href="index.html">
+                    Dashboard
+                </a>
+
+                <a href="stock-taking.html">
+                    Stock Taking
+                </a>
+
+            </nav>
+
+        </div>
+
+    </header>
+
+    <main class="container">
+
+        <!-- DASHBOARD -->
+        <section class="dashboard">
+
+            <div class="card">
+                <h3>Total Products</h3>
+                <p id="totalProducts">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Total Stock Value</h3>
+                <p id="stockValue">MK 0</p>
+            </div>
+
+            <div class="card">
+                <h3>Total Sales</h3>
+                <p id="totalSales">MK 0</p>
+            </div>
+
+            <div class="card">
+                <h3>Low Stock Items</h3>
+                <p id="lowStock">0</p>
+            </div>
+
+        </section>
+
+        <!-- FORMS -->
+        <section class="forms-section">
+
+            <!-- ADD STOCK -->
+            <div class="form-container">
+
+                <h2>Add New Stock</h2>
+
+                <form id="stockForm">
+
+                    <select id="shopSelect" required>
+
+                        <option value="">
+                            Select Shop
+                        </option>
+
+                        <option value="Shop 1">
+                            Shop 1
+                        </option>
+
+                        <option value="Shop 2">
+                            Shop 2
+                        </option>
+
+                    </select>
+
+                    <input
+                        type="text"
+                        id="itemName"
+                        placeholder="Item Name"
+                        required
+                    >
+
+                    <input
+                        type="number"
+                        id="itemQuantity"
+                        placeholder="Quantity"
+                        required
+                    >
+
+                    <input
+                        type="number"
+                        id="buyingPrice"
+                        placeholder="Buying Price"
+                        required
+                    >
+
+                    <input
+                        type="number"
+                        id="sellingPrice"
+                        placeholder="Selling Price"
+                        required
+                    >
+
+                    <button type="submit">
+                        Add Stock
+                    </button>
+
+                </form>
+
+            </div>
+
+            <!-- SALES -->
+            <div class="form-container">
+
+                <h2>Record Sale</h2>
+
+                <form id="salesForm">
+
+                    <select
+                        id="salesShopSelect"
+                        required
+                    >
+
+                        <option value="">
+                            Select Shop
+                        </option>
+
+                        <option value="Shop 1">
+                            Shop 1
+                        </option>
+
+                        <option value="Shop 2">
+                            Shop 2
+                        </option>
+
+                    </select>
+
+                    <select
+                        id="saleItem"
+                        required
+                    >
+
+                        <option value="">
+                            Select Product
+                        </option>
+
+                    </select>
+
+                    <input
+                        type="number"
+                        id="saleQuantity"
+                        placeholder="Quantity Sold"
+                        required
+                    >
+
+                    <button type="submit">
+                        Record Sale
+                    </button>
+
+                </form>
+
+            </div>
+
+        </section>
+
+        <!-- SEARCH -->
+        <section class="inventory-section">
+
+            <h2>Search Inventory</h2>
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Search inventory..."
+            >
+
+        </section>
+
+        <!-- SHOP 1 -->
+        <section class="inventory-section">
+
+            <h2>Shop 1 Inventory</h2>
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Item</th>
+
+                        <th>Quantity</th>
+
+                        <th>Buying Price</th>
+
+                        <th>Selling Price</th>
+
+                        <th>Status</th>
+
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="shop1Body">
+
+                </tbody>
+
+            </table>
+
+        </section>
+
+        <!-- SHOP 2 -->
+        <section class="inventory-section">
+
+            <h2>Shop 2 Inventory</h2>
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Item</th>
+
+                        <th>Quantity</th>
+
+                        <th>Buying Price</th>
+
+                        <th>Selling Price</th>
+
+                        <th>Status</th>
+
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="shop2Body">
+
+                </tbody>
+
+            </table>
+
+        </section>
+
+        <!-- SALES HISTORY -->
+        <section class="inventory-section">
+
+            <h2>Sales History</h2>
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Shop</th>
+
+                        <th>Item</th>
+
+                        <th>Quantity</th>
+
+                        <th>Total Amount</th>
+
+                        <th>Date</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="salesHistoryBody">
+
+                </tbody>
+
+            </table>
+
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
+
+</body>
+</html>

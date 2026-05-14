@@ -1,0 +1,162 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f9;
+    padding: 20px;
+    color: #333;
+}
+
+.header {
+    background: #007bff;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.dashboard {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    flex: 1;
+    min-width: 200px;
+    border-radius: 10px;
+}
+
+.card p {
+    font-size: 24px;
+    margin-top: 10px;
+    color: #007bff;
+}
+
+.forms-section {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.form-container,
+.inventory-section {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.form-container {
+    flex: 1;
+    min-width: 300px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+input,
+select,
+button {
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+input,
+select {
+    border: 1px solid #ccc;
+}
+
+button {
+    border: none;
+    background: #28a745;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #218838;
+}
+
+.delete-btn {
+    background: #dc3545;
+}
+
+.delete-btn:hover {
+    background: #b02a37;
+}
+
+.edit-btn {
+    background: #ffc107;
+    color: black;
+    margin-right: 5px;
+}
+
+.edit-btn:hover {
+    background: #d39e00;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th {
+    background: #007bff;
+    color: white;
+    padding: 12px;
+}
+
+td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+.low-stock-row {
+    background: #ffe5e5;
+}
+
+.status {
+    padding: 6px 10px;
+    border-radius: 20px;
+    color: white;
+    font-size: 14px;
+}
+
+.in-stock {
+    background: #28a745;
+}
+
+.low-stock {
+    background: #dc3545;
+}
+
+#searchInput {
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+
+    .dashboard,
+    .forms-section {
+        flex-direction: column;
+    }
+
+}
