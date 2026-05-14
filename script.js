@@ -15,7 +15,7 @@ let editItemId = null;
 const stockForm = document.getElementById("stockForm");
 const salesForm = document.getElementById("salesForm");
 const searchInput = document.getElementById("searchInput");
-const exportExcelBtn = document.getElementById("exportExcelBtn");
+const exportExcelBtns = document.querySelectorAll("[data-export]");
 
 const shopSelect = document.getElementById("shopSelect");
 const itemNameInput = document.getElementById("itemName");
@@ -60,9 +60,11 @@ if (salesShopSelect) {
     salesShopSelect.addEventListener("change", populateSalesDropdown);
 }
 
-if (exportExcelBtn) {
-    exportExcelBtn.addEventListener("click", exportExcelWorkbook);
-}
+exportExcelBtns.forEach(function(button) {
+    button.addEventListener("click", function() {
+        exportExcelWorkbook(button.dataset.export);
+    });
+});
 
 /* =========================
    HELPERS
@@ -292,8 +294,96 @@ function getExportRows() {
     };
 }
 
-function exportExcelWorkbook() {
+function getInventoryRows(items) {
+    return [
+        [
+            "Shop",
+            "Item",
+            "Quantity",
+            "Buying Price",
+            "Selling Price",
+            "Stock Value",
+            "Status"
+        ],
+        ...items.map(function(item) {
+            return [
+                item.shop,
+                item.name,
+                item.quantity,
+                item.buyingPrice,
+                item.sellingPrice,
+                item.quantity * item.buyingPrice,
+                getStockStatus(item)
+            ];
+        })
+    ];
+}
+
+function getStockTakingRows(items) {
+    return [
+        ["Shop", "Item", "System Stock", "Status"],
+        ...items.map(function(item) {
+            return [
+                item.shop,
+                item.name,
+                item.quantity,
+                getStockStatus(item)
+            ];
+        })
+    ];
+}
+
+function getExportConfig(type) {
     const rows = getExportRows();
+    const shop1Items = inventory.filter(function(item) {
+        return item.shop === "Shop 1";
+    });
+    const shop2Items = inventory.filter(function(item) {
+        return item.shop === "Shop 2";
+    });
+
+    const configs = {
+        shop1: {
+            fileName: "shop-1-inventory",
+            sheets: [["Shop 1 Inventory", getInventoryRows(shop1Items)]]
+        },
+        shop2: {
+            fileName: "shop-2-inventory",
+            sheets: [["Shop 2 Inventory", getInventoryRows(shop2Items)]]
+        },
+        sales: {
+            fileName: "sales-history",
+            sheets: [["Sales", rows.sales]]
+        },
+        adjustments: {
+            fileName: "stock-adjustments",
+            sheets: [["Adjustments", rows.adjustments]]
+        },
+        stockTakeShop1: {
+            fileName: "shop-1-stock-taking",
+            sheets: [["Shop 1 Stock Taking", getStockTakingRows(shop1Items)]]
+        },
+        stockTakeShop2: {
+            fileName: "shop-2-stock-taking",
+            sheets: [["Shop 2 Stock Taking", getStockTakingRows(shop2Items)]]
+        },
+        all: {
+            fileName: "stock-manager-export",
+            sheets: [
+                ["Summary", rows.summary],
+                ["Inventory", rows.inventory],
+                ["Sales", rows.sales],
+                ["Adjustments", rows.adjustments],
+                ["Stock Taking", rows.stockTaking]
+            ]
+        }
+    };
+
+    return configs[type] || configs.all;
+}
+
+function exportExcelWorkbook(type) {
+    const config = getExportConfig(type);
     const workbook =
         '<?xml version="1.0"?>' +
         '<?mso-application progid="Excel.Sheet"?>' +
@@ -301,11 +391,9 @@ function exportExcelWorkbook() {
         'xmlns:o="urn:schemas-microsoft-com:office:office" ' +
         'xmlns:x="urn:schemas-microsoft-com:office:excel" ' +
         'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
-        buildWorksheet("Summary", rows.summary) +
-        buildWorksheet("Inventory", rows.inventory) +
-        buildWorksheet("Sales", rows.sales) +
-        buildWorksheet("Adjustments", rows.adjustments) +
-        buildWorksheet("Stock Taking", rows.stockTaking) +
+        config.sheets.map(function(sheet) {
+            return buildWorksheet(sheet[0], sheet[1]);
+        }).join("") +
         "</Workbook>";
 
     const blob = new Blob([workbook], {
@@ -315,7 +403,7 @@ function exportExcelWorkbook() {
     const exportDate = new Date().toISOString().slice(0, 10);
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `stock-manager-export-${exportDate}.xls`;
+    link.download = `${config.fileName}-${exportDate}.xls`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
