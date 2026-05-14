@@ -20,6 +20,25 @@ body {
     margin-bottom: 20px;
 }
 
+.header-top {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-items: center;
+}
+
+.header nav {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.header a {
+    color: white;
+}
+
 .container {
     display: flex;
     flex-direction: column;
@@ -50,6 +69,25 @@ body {
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
+}
+
+.toolbar-section {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.export-btn {
+    background: #0056b3;
+}
+
+.export-btn:hover {
+    background: #004494;
+}
+
+.nav-export-btn {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.65);
 }
 
 .form-container,
@@ -129,6 +167,12 @@ td {
     border-bottom: 1px solid #ddd;
 }
 
+.actions-cell {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .low-stock-row {
     background: #ffe5e5;
 }
@@ -148,8 +192,22 @@ td {
     background: #dc3545;
 }
 
+.negative-difference {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.positive-difference {
+    color: #28a745;
+    font-weight: bold;
+}
+
 #searchInput {
     width: 100%;
+}
+
+.inventory-section {
+    overflow-x: auto;
 }
 
 @media (max-width: 768px) {
