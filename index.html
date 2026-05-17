@@ -285,9 +285,37 @@
 
             <div class="section-header">
                 <h2>Sales History</h2>
-                <button type="button" class="export-btn" data-export="sales">
-                    Export Excel
-                </button>
+                <div class="section-actions">
+                    <select id="salesClearPeriod" aria-label="Sales clear period">
+                        <option value="today">
+                            Daily
+                        </option>
+
+                        <option value="week">
+                            Weekly
+                        </option>
+
+                        <option value="month">
+                            Monthly
+                        </option>
+
+                        <option value="year">
+                            Yearly
+                        </option>
+
+                        <option value="all">
+                            All Sales
+                        </option>
+                    </select>
+
+                    <button type="button" class="delete-btn" id="clearSalesHistory">
+                        Clear
+                    </button>
+
+                    <button type="button" class="export-btn" data-export="sales">
+                        Export Excel
+                    </button>
+                </div>
             </div>
 
             <table>

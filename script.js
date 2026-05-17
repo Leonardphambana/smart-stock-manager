@@ -26,6 +26,8 @@ const sellingPriceInput = document.getElementById("sellingPrice");
 const salesShopSelect = document.getElementById("salesShopSelect");
 const saleItemInput = document.getElementById("saleItem");
 const saleQuantityInput = document.getElementById("saleQuantity");
+const salesClearPeriod = document.getElementById("salesClearPeriod");
+const clearSalesHistoryBtn = document.getElementById("clearSalesHistory");
 
 const stockTakeShop1Body = document.getElementById("stockTakeShop1Body");
 const stockTakeShop2Body = document.getElementById("stockTakeShop2Body");
@@ -58,6 +60,10 @@ if (searchInput) {
 
 if (salesShopSelect) {
     salesShopSelect.addEventListener("change", populateSalesDropdown);
+}
+
+if (clearSalesHistoryBtn) {
+    clearSalesHistoryBtn.addEventListener("click", clearSalesHistory);
 }
 
 exportExcelBtns.forEach(function(button) {
@@ -121,6 +127,76 @@ function getOptionalNonNegativeNumber(input) {
 
 function getStockValue(item) {
     return item.quantity * item.sellingPrice;
+}
+
+function getSaleDate(sale) {
+    const timestamp = Number(sale.timestamp);
+
+    if (Number.isFinite(timestamp) && timestamp > 0) {
+        return new Date(timestamp);
+    }
+
+    const parsedDate = new Date(sale.date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+        return null;
+    }
+
+    return parsedDate;
+}
+
+function getStartOfPeriod(period) {
+    const start = new Date();
+
+    start.setHours(0, 0, 0, 0);
+
+    if (period === "week") {
+        const day = start.getDay();
+        const daysSinceMonday = day === 0 ? 6 : day - 1;
+        start.setDate(start.getDate() - daysSinceMonday);
+    }
+
+    if (period === "month") {
+        start.setDate(1);
+    }
+
+    if (period === "year") {
+        start.setMonth(0, 1);
+    }
+
+    return start;
+}
+
+function isSaleInClearPeriod(sale, period) {
+    if (period === "all") {
+        return true;
+    }
+
+    const saleDate = getSaleDate(sale);
+
+    if (!saleDate) {
+        return false;
+    }
+
+    return saleDate >= getStartOfPeriod(period);
+}
+
+function getClearPeriodLabel(period) {
+    const labels = {
+        today: "daily",
+        week: "weekly",
+        month: "monthly",
+        year: "yearly",
+        all: "all"
+    };
+
+    return labels[period] || "selected";
+}
+
+function updateTotalSalesAmount() {
+    totalSalesAmount = salesHistory.reduce(function(total, sale) {
+        return total + Number(sale.amount);
+    }, 0);
 }
 
 function getNonNegativeNumber(input) {
@@ -715,7 +791,8 @@ function recordSale(event) {
         item: item.name,
         quantity: quantity,
         amount: amount,
-        date: new Date().toLocaleString()
+        date: new Date().toLocaleString(),
+        timestamp: Date.now()
     });
 
     addAdjustment({
@@ -754,6 +831,41 @@ function renderSalesHistory() {
 
         salesHistoryBody.appendChild(row);
     });
+}
+
+function clearSalesHistory() {
+    if (!salesClearPeriod) {
+        return;
+    }
+
+    if (salesHistory.length === 0) {
+        alert("No sales history to clear");
+        return;
+    }
+
+    const period = salesClearPeriod.value;
+    const matches = salesHistory.filter(function(sale) {
+        return isSaleInClearPeriod(sale, period);
+    });
+
+    if (matches.length === 0) {
+        alert(`No ${getClearPeriodLabel(period)} sales history found`);
+        return;
+    }
+
+    const confirmClear = confirm(`Clear ${matches.length} ${getClearPeriodLabel(period)} sales record(s)?`);
+
+    if (!confirmClear) {
+        return;
+    }
+
+    salesHistory = salesHistory.filter(function(sale) {
+        return !isSaleInClearPeriod(sale, period);
+    });
+
+    updateTotalSalesAmount();
+    saveData();
+    refreshViews();
 }
 
 /* =========================
@@ -953,9 +1065,12 @@ function loadData() {
                 item: sale.item,
                 quantity: Number(sale.quantity),
                 amount: Number(sale.amount),
-                date: sale.date
+                date: sale.date,
+                timestamp: Number.isFinite(Number(sale.timestamp)) ? Number(sale.timestamp) : null
             };
         });
+
+        updateTotalSalesAmount();
     }
 
     if (savedAdjustments) {
@@ -973,7 +1088,7 @@ function loadData() {
         });
     }
 
-    if (savedTotal) {
+    if (savedTotal && salesHistory.length === 0) {
         totalSalesAmount = Number(savedTotal);
     }
 

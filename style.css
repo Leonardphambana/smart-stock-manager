@@ -133,6 +133,21 @@ body {
     margin-bottom: 14px;
 }
 
+.section-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.section-actions select {
+    width: auto;
+    min-width: 130px;
+    padding: 9px 10px;
+    font-size: 14px;
+}
+
 h2 {
     font-size: 20px;
 }
@@ -309,7 +324,10 @@ tbody tr:hover {
         flex-direction: column;
     }
 
-    .export-btn {
+    .section-actions,
+    .section-actions select,
+    .export-btn,
+    .section-actions button {
         width: 100%;
     }
 }
