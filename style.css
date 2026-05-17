@@ -148,6 +148,12 @@ body {
     font-size: 14px;
 }
 
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+    gap: 12px;
+}
+
 h2 {
     font-size: 20px;
 }
@@ -302,7 +308,8 @@ tbody tr:hover {
     }
 
     .dashboard,
-    .forms-section {
+    .forms-section,
+    .filters-grid {
         grid-template-columns: 1fr;
     }
 }

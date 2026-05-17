@@ -41,8 +41,50 @@
 
     <main class="container">
 
-        <!-- SHOP 1 -->
+        <!-- FILTERS -->
         <section class="inventory-section">
+
+            <div class="section-header">
+                <h2>Filters</h2>
+                <button type="button" class="export-btn" id="resetStockTakeFilters">
+                    Reset
+                </button>
+            </div>
+
+            <div class="filters-grid">
+
+                <select id="stockTakeShopFilter" aria-label="Filter by shop">
+                    <option value="">
+                        All Shops
+                    </option>
+
+                    <option value="Shop 1">
+                        Shop 1
+                    </option>
+
+                    <option value="Shop 2">
+                        Shop 2
+                    </option>
+                </select>
+
+                <input
+                    type="date"
+                    id="stockTakeDateFilter"
+                    aria-label="Filter by date"
+                >
+
+                <select id="stockTakeItemFilter" aria-label="Filter by item">
+                    <option value="">
+                        All Items
+                    </option>
+                </select>
+
+            </div>
+
+        </section>
+
+        <!-- SHOP 1 -->
+        <section class="inventory-section" id="stockTakeShop1Section">
 
             <div class="section-header">
                 <h2>Shop 1 Stock Taking</h2>
@@ -80,7 +122,7 @@
         </section>
 
         <!-- SHOP 2 -->
-        <section class="inventory-section">
+        <section class="inventory-section" id="stockTakeShop2Section">
 
             <div class="section-header">
                 <h2>Shop 2 Stock Taking</h2>

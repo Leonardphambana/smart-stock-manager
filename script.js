@@ -30,6 +30,12 @@ const clearSalesHistoryBtn = document.getElementById("clearSalesHistory");
 
 const stockTakeShop1Body = document.getElementById("stockTakeShop1Body");
 const stockTakeShop2Body = document.getElementById("stockTakeShop2Body");
+const stockTakeShop1Section = document.getElementById("stockTakeShop1Section");
+const stockTakeShop2Section = document.getElementById("stockTakeShop2Section");
+const stockTakeShopFilter = document.getElementById("stockTakeShopFilter");
+const stockTakeDateFilter = document.getElementById("stockTakeDateFilter");
+const stockTakeItemFilter = document.getElementById("stockTakeItemFilter");
+const resetStockTakeFiltersBtn = document.getElementById("resetStockTakeFilters");
 
 const shop1Body = document.getElementById("shop1Body");
 const shop2Body = document.getElementById("shop2Body");
@@ -63,6 +69,25 @@ if (salesShopSelect) {
 
 if (clearSalesHistoryBtn) {
     clearSalesHistoryBtn.addEventListener("click", clearSalesHistory);
+}
+
+if (stockTakeShopFilter) {
+    stockTakeShopFilter.addEventListener("change", function() {
+        populateStockTakeItemFilter();
+        renderStockTaking();
+    });
+}
+
+if (stockTakeDateFilter) {
+    stockTakeDateFilter.addEventListener("change", renderStockTaking);
+}
+
+if (stockTakeItemFilter) {
+    stockTakeItemFilter.addEventListener("change", renderStockTaking);
+}
+
+if (resetStockTakeFiltersBtn) {
+    resetStockTakeFiltersBtn.addEventListener("click", resetStockTakeFilters);
 }
 
 exportExcelBtns.forEach(function(button) {
@@ -246,6 +271,7 @@ function addAdjustment(entry) {
     adjustmentHistory.unshift({
         id: createId(),
         date: new Date().toLocaleString(),
+        timestamp: Date.now(),
         ...entry
     });
 }
@@ -263,6 +289,7 @@ function refreshViews() {
     renderAdjustmentHistory();
     updateDashboard();
     populateSalesDropdown();
+    populateStockTakeItemFilter();
     renderStockTaking();
 }
 
@@ -414,6 +441,30 @@ function getInventoryRows(items) {
     ];
 }
 
+function getStockTakeExportItems(shop) {
+    if (!stockTakeShopFilter && !stockTakeDateFilter && !stockTakeItemFilter) {
+        return inventory.filter(function(item) {
+            return item.shop === shop;
+        });
+    }
+
+    return inventory.filter(function(item) {
+        if (item.shop !== shop) {
+            return false;
+        }
+
+        if (stockTakeItemFilter && stockTakeItemFilter.value && item.name !== stockTakeItemFilter.value) {
+            return false;
+        }
+
+        if (stockTakeDateFilter && stockTakeDateFilter.value) {
+            return formatDateKey(getLatestItemAdjustmentDate(item)) === stockTakeDateFilter.value;
+        }
+
+        return true;
+    });
+}
+
 function getStockTakingRows(items) {
     return [
         ["Shop", "Item", "System Stock", "Status"],
@@ -456,11 +507,11 @@ function getExportConfig(type) {
         },
         stockTakeShop1: {
             fileName: "shop-1-stock-taking",
-            sheets: [["Shop 1 Stock Taking", getStockTakingRows(shop1Items)]]
+            sheets: [["Shop 1 Stock Taking", getStockTakingRows(getStockTakeExportItems("Shop 1"))]]
         },
         stockTakeShop2: {
             fileName: "shop-2-stock-taking",
-            sheets: [["Shop 2 Stock Taking", getStockTakingRows(shop2Items)]]
+            sheets: [["Shop 2 Stock Taking", getStockTakingRows(getStockTakeExportItems("Shop 2"))]]
         },
         all: {
             fileName: "stock-manager-export",
@@ -918,6 +969,123 @@ function updateDashboard() {
     lowStock.textContent = low;
 }
 
+function getAdjustmentDate(entry) {
+    const timestamp = Number(entry.timestamp);
+
+    if (Number.isFinite(timestamp) && timestamp > 0) {
+        return new Date(timestamp);
+    }
+
+    const parsedDate = new Date(entry.date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+        return null;
+    }
+
+    return parsedDate;
+}
+
+function formatDateKey(date) {
+    if (!date) {
+        return "";
+    }
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+function getLatestItemAdjustmentDate(item) {
+    const adjustment = adjustmentHistory.find(function(entry) {
+        return entry.shop === item.shop && entry.item === item.name;
+    });
+
+    return adjustment ? getAdjustmentDate(adjustment) : null;
+}
+
+function getStockTakeFilteredItems() {
+    const shop = stockTakeShopFilter ? stockTakeShopFilter.value : "";
+    const itemName = stockTakeItemFilter ? stockTakeItemFilter.value : "";
+    const date = stockTakeDateFilter ? stockTakeDateFilter.value : "";
+
+    return inventory.filter(function(item) {
+        if (shop && item.shop !== shop) {
+            return false;
+        }
+
+        if (itemName && item.name !== itemName) {
+            return false;
+        }
+
+        if (date) {
+            return formatDateKey(getLatestItemAdjustmentDate(item)) === date;
+        }
+
+        return true;
+    });
+}
+
+function populateStockTakeItemFilter() {
+    if (!stockTakeItemFilter) {
+        return;
+    }
+
+    const selectedItem = stockTakeItemFilter.value;
+    const selectedShop = stockTakeShopFilter ? stockTakeShopFilter.value : "";
+    const names = [];
+
+    inventory.forEach(function(item) {
+        if (selectedShop && item.shop !== selectedShop) {
+            return;
+        }
+
+        if (!names.includes(item.name)) {
+            names.push(item.name);
+        }
+    });
+
+    names.sort(function(a, b) {
+        return a.localeCompare(b);
+    });
+
+    stockTakeItemFilter.textContent = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "All Items";
+    stockTakeItemFilter.appendChild(placeholder);
+
+    names.forEach(function(name) {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        stockTakeItemFilter.appendChild(option);
+    });
+
+    if (names.includes(selectedItem)) {
+        stockTakeItemFilter.value = selectedItem;
+    }
+}
+
+function resetStockTakeFilters() {
+    if (stockTakeShopFilter) {
+        stockTakeShopFilter.value = "";
+    }
+
+    if (stockTakeDateFilter) {
+        stockTakeDateFilter.value = "";
+    }
+
+    if (stockTakeItemFilter) {
+        stockTakeItemFilter.value = "";
+    }
+
+    populateStockTakeItemFilter();
+    renderStockTaking();
+}
+
 /* =========================
    STOCK TAKING PAGE
 ========================= */
@@ -930,7 +1098,18 @@ function renderStockTaking() {
     stockTakeShop1Body.textContent = "";
     stockTakeShop2Body.textContent = "";
 
-    inventory.forEach(function(item) {
+    const items = getStockTakeFilteredItems();
+    const selectedShop = stockTakeShopFilter ? stockTakeShopFilter.value : "";
+
+    if (stockTakeShop1Section) {
+        stockTakeShop1Section.style.display = selectedShop === "Shop 2" ? "none" : "";
+    }
+
+    if (stockTakeShop2Section) {
+        stockTakeShop2Section.style.display = selectedShop === "Shop 1" ? "none" : "";
+    }
+
+    items.forEach(function(item) {
         const row = document.createElement("tr");
 
         row.appendChild(createCell(item.name));
@@ -1079,7 +1258,8 @@ function loadData() {
                 item: entry.item,
                 previousQuantity: Number(entry.previousQuantity),
                 newQuantity: Number(entry.newQuantity),
-                note: entry.note
+                note: entry.note,
+                timestamp: Number.isFinite(Number(entry.timestamp)) ? Number(entry.timestamp) : null
             };
         });
     }
