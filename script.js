@@ -111,6 +111,18 @@ function getPositiveNumber(input) {
     return value;
 }
 
+function getOptionalNonNegativeNumber(input) {
+    if (input.value.trim() === "") {
+        return 0;
+    }
+
+    return getNonNegativeNumber(input);
+}
+
+function getStockValue(item) {
+    return item.quantity * item.sellingPrice;
+}
+
 function getNonNegativeNumber(input) {
     if (input.value.trim() === "") {
         return null;
@@ -210,7 +222,7 @@ function buildWorksheet(name, rows) {
 
 function getExportRows() {
     const stockValueAmount = inventory.reduce(function(total, item) {
-        return total + item.quantity * item.buyingPrice;
+        return total + getStockValue(item);
     }, 0);
 
     return {
@@ -241,7 +253,7 @@ function getExportRows() {
                     item.quantity,
                     item.buyingPrice,
                     item.sellingPrice,
-                    item.quantity * item.buyingPrice,
+                    getStockValue(item),
                     getStockStatus(item)
                 ];
             })
@@ -312,7 +324,7 @@ function getInventoryRows(items) {
                 item.quantity,
                 item.buyingPrice,
                 item.sellingPrice,
-                item.quantity * item.buyingPrice,
+                getStockValue(item),
                 getStockStatus(item)
             ];
         })
@@ -419,7 +431,7 @@ function addStock(event) {
 
     const name = itemNameInput.value.trim();
     const quantity = getNonNegativeNumber(itemQuantityInput);
-    const buyingPrice = getPositiveNumber(buyingPriceInput);
+    const buyingPrice = getOptionalNonNegativeNumber(buyingPriceInput);
     const sellingPrice = getPositiveNumber(sellingPriceInput);
 
     if (!shopSelect.value || !name) {
@@ -432,8 +444,13 @@ function addStock(event) {
         return;
     }
 
-    if (buyingPrice === null || sellingPrice === null) {
-        alert("Prices must be greater than zero");
+    if (buyingPrice === null) {
+        alert("Buying price must be zero or more");
+        return;
+    }
+
+    if (sellingPrice === null) {
+        alert("Selling price must be greater than zero");
         return;
     }
 
@@ -780,7 +797,7 @@ function updateDashboard() {
     let low = 0;
 
     inventory.forEach(function(item) {
-        value += item.quantity * item.buyingPrice;
+        value += getStockValue(item);
 
         if (item.quantity <= 5) {
             low++;
@@ -922,7 +939,7 @@ function loadData() {
                 shop: item.shop,
                 name: item.name,
                 quantity: Number(item.quantity),
-                buyingPrice: Number(item.buyingPrice),
+                buyingPrice: Number.isFinite(Number(item.buyingPrice)) ? Number(item.buyingPrice) : 0,
                 sellingPrice: Number(item.sellingPrice)
             };
         });
