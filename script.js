@@ -20,8 +20,7 @@ const exportExcelBtns = document.querySelectorAll("[data-export]");
 const shopSelect = document.getElementById("shopSelect");
 const itemNameInput = document.getElementById("itemName");
 const itemQuantityInput = document.getElementById("itemQuantity");
-const buyingPriceInput = document.getElementById("buyingPrice");
-const sellingPriceInput = document.getElementById("sellingPrice");
+const priceInput = document.getElementById("price");
 
 const salesShopSelect = document.getElementById("salesShopSelect");
 const saleItemInput = document.getElementById("saleItem");
@@ -117,16 +116,28 @@ function getPositiveNumber(input) {
     return value;
 }
 
-function getOptionalNonNegativeNumber(input) {
-    if (input.value.trim() === "") {
-        return 0;
+function getSavedItemPrice(item) {
+    const price = Number(item.price);
+    const sellingPrice = Number(item.sellingPrice);
+    const buyingPrice = Number(item.buyingPrice);
+
+    if (Number.isFinite(price) && price > 0) {
+        return price;
     }
 
-    return getNonNegativeNumber(input);
+    if (Number.isFinite(sellingPrice) && sellingPrice > 0) {
+        return sellingPrice;
+    }
+
+    if (Number.isFinite(buyingPrice) && buyingPrice > 0) {
+        return buyingPrice;
+    }
+
+    return 0;
 }
 
 function getStockValue(item) {
-    return item.quantity * item.sellingPrice;
+    return item.quantity * item.price;
 }
 
 function getSaleDate(sale) {
@@ -317,8 +328,7 @@ function getExportRows() {
                 "Shop",
                 "Item",
                 "Quantity",
-                "Buying Price",
-                "Selling Price",
+                "Price",
                 "Stock Value",
                 "Status"
             ],
@@ -327,8 +337,7 @@ function getExportRows() {
                     item.shop,
                     item.name,
                     item.quantity,
-                    item.buyingPrice,
-                    item.sellingPrice,
+                    item.price,
                     getStockValue(item),
                     getStockStatus(item)
                 ];
@@ -388,8 +397,7 @@ function getInventoryRows(items) {
             "Shop",
             "Item",
             "Quantity",
-            "Buying Price",
-            "Selling Price",
+            "Price",
             "Stock Value",
             "Status"
         ],
@@ -398,8 +406,7 @@ function getInventoryRows(items) {
                 item.shop,
                 item.name,
                 item.quantity,
-                item.buyingPrice,
-                item.sellingPrice,
+                item.price,
                 getStockValue(item),
                 getStockStatus(item)
             ];
@@ -507,8 +514,7 @@ function addStock(event) {
 
     const name = itemNameInput.value.trim();
     const quantity = getNonNegativeNumber(itemQuantityInput);
-    const buyingPrice = getOptionalNonNegativeNumber(buyingPriceInput);
-    const sellingPrice = getPositiveNumber(sellingPriceInput);
+    const price = getPositiveNumber(priceInput);
 
     if (!shopSelect.value || !name) {
         alert("Fill all fields");
@@ -520,13 +526,8 @@ function addStock(event) {
         return;
     }
 
-    if (buyingPrice === null) {
-        alert("Buying price must be zero or more");
-        return;
-    }
-
-    if (sellingPrice === null) {
-        alert("Selling price must be greater than zero");
+    if (price === null) {
+        alert("Price must be greater than zero");
         return;
     }
 
@@ -552,8 +553,7 @@ function addStock(event) {
         item.shop = shopSelect.value;
         item.name = name;
         item.quantity = quantity;
-        item.buyingPrice = buyingPrice;
-        item.sellingPrice = sellingPrice;
+        item.price = price;
 
         addAdjustment({
             type: "Edit",
@@ -571,8 +571,7 @@ function addStock(event) {
             shop: shopSelect.value,
             name: name,
             quantity: quantity,
-            buyingPrice: buyingPrice,
-            sellingPrice: sellingPrice
+            price: price
         };
 
         inventory.push(item);
@@ -607,8 +606,7 @@ function editItem(id) {
     shopSelect.value = item.shop;
     itemNameInput.value = item.name;
     itemQuantityInput.value = item.quantity;
-    buyingPriceInput.value = item.buyingPrice;
-    sellingPriceInput.value = item.sellingPrice;
+    priceInput.value = item.price;
     editItemId = item.id;
     stockForm.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -684,8 +682,7 @@ function renderInventory(items) {
 
         row.appendChild(createCell(item.name));
         row.appendChild(createCell(item.quantity));
-        row.appendChild(createCell(formatMoney(item.buyingPrice)));
-        row.appendChild(createCell(formatMoney(item.sellingPrice)));
+        row.appendChild(createCell(formatMoney(item.price)));
 
         const statusCell = document.createElement("td");
         const statusBadge = document.createElement("span");
@@ -782,7 +779,7 @@ function recordSale(event) {
     const previousQuantity = item.quantity;
     item.quantity -= quantity;
 
-    const amount = quantity * item.sellingPrice;
+    const amount = quantity * item.price;
     totalSalesAmount += amount;
 
     salesHistory.unshift({
@@ -1051,8 +1048,7 @@ function loadData() {
                 shop: item.shop,
                 name: item.name,
                 quantity: Number(item.quantity),
-                buyingPrice: Number.isFinite(Number(item.buyingPrice)) ? Number(item.buyingPrice) : 0,
-                sellingPrice: Number(item.sellingPrice)
+                price: getSavedItemPrice(item)
             };
         });
     }
