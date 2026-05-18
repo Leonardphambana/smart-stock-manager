@@ -311,6 +311,17 @@ function isDuplicateProduct(shop, name, currentId) {
     });
 }
 
+function findExistingProduct(shop, name) {
+    const normalizedName = name.trim().toLowerCase();
+
+    return inventory.find(function(item) {
+        return (
+            item.shop === shop &&
+            item.name.trim().toLowerCase() === normalizedName
+        );
+    });
+}
+
 function addAdjustment(entry) {
     adjustmentHistory.unshift({
         id: createId(),
@@ -620,12 +631,12 @@ function addStock(event) {
         return;
     }
 
-    if (isDuplicateProduct(shopSelect.value, name, editItemId)) {
-        alert("This product already exists in the selected shop");
-        return;
-    }
-
     if (editItemId !== null) {
+        if (isDuplicateProduct(shopSelect.value, name, editItemId)) {
+            alert("This product already exists in the selected shop");
+            return;
+        }
+
         const item = findItemById(editItemId);
 
         if (!item) {
@@ -655,6 +666,29 @@ function addStock(event) {
 
         editItemId = null;
     } else {
+        const existingItem = findExistingProduct(shopSelect.value, name);
+
+        if (existingItem) {
+            const previousQuantity = existingItem.quantity;
+
+            existingItem.quantity += quantity;
+            existingItem.price = price;
+
+            addAdjustment({
+                type: "Top Up",
+                shop: existingItem.shop,
+                item: existingItem.name,
+                previousQuantity: previousQuantity,
+                newQuantity: existingItem.quantity,
+                note: `${quantity} added to existing stock`
+            });
+
+            saveData();
+            stockForm.reset();
+            refreshViews();
+            return;
+        }
+
         const item = {
             id: createId(),
             shop: shopSelect.value,
