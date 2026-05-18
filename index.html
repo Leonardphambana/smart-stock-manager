@@ -10,7 +10,7 @@
 
     <title>Smart Stock Manager</title>
 
-    <link rel="stylesheet" href="style.css?v=20260518c">
+    <link rel="stylesheet" href="style.css?v=20260518d">
 </head>
 <body>
 
@@ -232,9 +232,15 @@
 
             <div class="section-header">
                 <h2>Shop 1 Inventory</h2>
-                <button type="button" class="export-btn" data-export="shop1">
-                    Export Excel
-                </button>
+                <div class="section-actions">
+                    <button type="button" class="export-btn" id="toggleShop1Inventory">
+                        See More
+                    </button>
+
+                    <button type="button" class="export-btn" data-export="shop1">
+                        Export Excel
+                    </button>
+                </div>
             </div>
 
             <table>
@@ -270,9 +276,15 @@
 
             <div class="section-header">
                 <h2>Shop 2 Inventory</h2>
-                <button type="button" class="export-btn" data-export="shop2">
-                    Export Excel
-                </button>
+                <div class="section-actions">
+                    <button type="button" class="export-btn" id="toggleShop2Inventory">
+                        See More
+                    </button>
+
+                    <button type="button" class="export-btn" data-export="shop2">
+                        Export Excel
+                    </button>
+                </div>
             </div>
 
             <table>
@@ -419,7 +431,7 @@
 
     </main>
 
-    <script src="script.js?v=20260518c"></script>
+    <script src="script.js?v=20260518d"></script>
 
 </body>
 </html>

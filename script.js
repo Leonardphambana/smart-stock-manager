@@ -8,6 +8,8 @@ let adjustmentHistory = [];
 let totalSalesAmount = 0;
 let editItemId = null;
 let showAllAdjustments = false;
+let showAllShop1Inventory = false;
+let showAllShop2Inventory = false;
 
 /* =========================
    DOM ELEMENTS
@@ -47,6 +49,8 @@ const resetStockTakeFiltersBtn = document.getElementById("resetStockTakeFilters"
 
 const shop1Body = document.getElementById("shop1Body");
 const shop2Body = document.getElementById("shop2Body");
+const toggleShop1InventoryBtn = document.getElementById("toggleShop1Inventory");
+const toggleShop2InventoryBtn = document.getElementById("toggleShop2Inventory");
 const salesHistoryBody = document.getElementById("salesHistoryBody");
 const adjustmentHistoryBody = document.getElementById("adjustmentHistoryBody");
 const toggleAdjustmentHistoryBtn = document.getElementById("toggleAdjustmentHistory");
@@ -120,6 +124,14 @@ if (resetStockTakeFiltersBtn) {
 
 if (toggleAdjustmentHistoryBtn) {
     toggleAdjustmentHistoryBtn.addEventListener("click", toggleAdjustmentHistory);
+}
+
+if (toggleShop1InventoryBtn) {
+    toggleShop1InventoryBtn.addEventListener("click", toggleShop1Inventory);
+}
+
+if (toggleShop2InventoryBtn) {
+    toggleShop2InventoryBtn.addEventListener("click", toggleShop2Inventory);
 }
 
 exportExcelBtns.forEach(function(button) {
@@ -839,6 +851,14 @@ function renderInventory(items) {
     shop2Body.textContent = "";
 
     const selectedShop = inventoryShopFilter ? inventoryShopFilter.value : "";
+    const shop1Items = items.filter(function(item) {
+        return item.shop === "Shop 1";
+    });
+    const shop2Items = items.filter(function(item) {
+        return item.shop === "Shop 2";
+    });
+    const visibleShop1Items = showAllShop1Inventory ? shop1Items : shop1Items.slice(0, 3);
+    const visibleShop2Items = showAllShop2Inventory ? shop2Items : shop2Items.slice(0, 3);
 
     if (shop1Section) {
         shop1Section.style.display = selectedShop === "Shop 2" ? "none" : "";
@@ -848,46 +868,76 @@ function renderInventory(items) {
         shop2Section.style.display = selectedShop === "Shop 1" ? "none" : "";
     }
 
-    items.forEach(function(item) {
-        const row = document.createElement("tr");
-        const status = getStockStatus(item);
-        const statusClass = item.quantity <= 5 ? "low-stock" : "in-stock";
-
-        if (item.quantity <= 5) {
-            row.classList.add("low-stock-row");
-        }
-
-        row.appendChild(createCell(item.name));
-        row.appendChild(createCell(item.quantity));
-        row.appendChild(createCell(formatMoney(item.price)));
-
-        const statusCell = document.createElement("td");
-        const statusBadge = document.createElement("span");
-        statusBadge.className = `status ${statusClass}`;
-        statusBadge.textContent = status;
-        statusCell.appendChild(statusBadge);
-        row.appendChild(statusCell);
-
-        const actionsCell = document.createElement("td");
-        actionsCell.className = "actions-cell";
-        actionsCell.appendChild(
-            createButton("Edit", "edit-btn", function() {
-                editItem(item.id);
-            })
-        );
-        actionsCell.appendChild(
-            createButton("Delete", "delete-btn", function() {
-                deleteItem(item.id);
-            })
-        );
-        row.appendChild(actionsCell);
-
-        if (item.shop === "Shop 1") {
-            shop1Body.appendChild(row);
-        } else {
-            shop2Body.appendChild(row);
-        }
+    visibleShop1Items.forEach(function(item) {
+        renderInventoryRow(item, shop1Body);
     });
+
+    visibleShop2Items.forEach(function(item) {
+        renderInventoryRow(item, shop2Body);
+    });
+
+    updateInventoryToggle(toggleShop1InventoryBtn, shop1Items.length, showAllShop1Inventory);
+    updateInventoryToggle(toggleShop2InventoryBtn, shop2Items.length, showAllShop2Inventory);
+}
+
+function renderInventoryRow(item, tableBody) {
+    if (!tableBody) {
+        return;
+    }
+
+    const row = document.createElement("tr");
+    const status = getStockStatus(item);
+    const statusClass = item.quantity <= 5 ? "low-stock" : "in-stock";
+
+    if (item.quantity <= 5) {
+        row.classList.add("low-stock-row");
+    }
+
+    row.appendChild(createCell(item.name));
+    row.appendChild(createCell(item.quantity));
+    row.appendChild(createCell(formatMoney(item.price)));
+
+    const statusCell = document.createElement("td");
+    const statusBadge = document.createElement("span");
+    statusBadge.className = `status ${statusClass}`;
+    statusBadge.textContent = status;
+    statusCell.appendChild(statusBadge);
+    row.appendChild(statusCell);
+
+    const actionsCell = document.createElement("td");
+    actionsCell.className = "actions-cell";
+    actionsCell.appendChild(
+        createButton("Edit", "edit-btn", function() {
+            editItem(item.id);
+        })
+    );
+    actionsCell.appendChild(
+        createButton("Delete", "delete-btn", function() {
+            deleteItem(item.id);
+        })
+    );
+    row.appendChild(actionsCell);
+
+    tableBody.appendChild(row);
+}
+
+function updateInventoryToggle(button, itemCount, isExpanded) {
+    if (!button) {
+        return;
+    }
+
+    button.hidden = itemCount <= 3;
+    button.textContent = isExpanded ? "See Less" : "See More";
+}
+
+function toggleShop1Inventory() {
+    showAllShop1Inventory = !showAllShop1Inventory;
+    renderInventory(getInventoryFilteredItems());
+}
+
+function toggleShop2Inventory() {
+    showAllShop2Inventory = !showAllShop2Inventory;
+    renderInventory(getInventoryFilteredItems());
 }
 
 /* =========================
