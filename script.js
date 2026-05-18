@@ -775,6 +775,39 @@ function getInventoryFilteredItems() {
     });
 }
 
+function getInventoryFilteredSales() {
+    const term = searchInput ? searchInput.value.trim().toLowerCase() : "";
+    const shop = inventoryShopFilter ? inventoryShopFilter.value : "";
+    const itemName = inventoryItemFilter ? inventoryItemFilter.value : "";
+    const date = inventoryDateFilter ? inventoryDateFilter.value : "";
+
+    return salesHistory.filter(function(sale) {
+        if (term && !sale.item.toLowerCase().includes(term)) {
+            return false;
+        }
+
+        if (shop && sale.shop !== shop) {
+            return false;
+        }
+
+        if (itemName && sale.item !== itemName) {
+            return false;
+        }
+
+        if (date) {
+            return formatDateKey(getSaleDate(sale)) === date;
+        }
+
+        return true;
+    });
+}
+
+function getSalesTotal(sales) {
+    return sales.reduce(function(total, sale) {
+        return total + Number(sale.amount);
+    }, 0);
+}
+
 function populateInventoryItemFilter() {
     if (!inventoryItemFilter) {
         return;
@@ -1141,12 +1174,15 @@ function updateDashboard() {
         return;
     }
 
-    totalProducts.textContent = inventory.length;
+    const visibleItems = getInventoryFilteredItems();
+    const visibleSales = getInventoryFilteredSales();
+
+    totalProducts.textContent = visibleItems.length;
 
     let value = 0;
     let low = 0;
 
-    inventory.forEach(function(item) {
+    visibleItems.forEach(function(item) {
         value += getStockValue(item);
 
         if (item.quantity <= 5) {
@@ -1155,7 +1191,7 @@ function updateDashboard() {
     });
 
     stockValue.textContent = formatMoney(value);
-    totalSales.textContent = formatMoney(totalSalesAmount);
+    totalSales.textContent = formatMoney(getSalesTotal(visibleSales));
     lowStock.textContent = low;
 }
 
