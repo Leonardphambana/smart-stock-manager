@@ -10,7 +10,7 @@
 
     <title>Smart Stock Manager</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20260518b">
 </head>
 <body>
 
@@ -179,21 +179,56 @@
 
         </section>
 
-        <!-- SEARCH -->
+        <!-- FILTERS -->
         <section class="inventory-section">
 
-            <h2>Search Inventory</h2>
+            <div class="section-header">
+                <h2>Inventory Filters</h2>
+                <button type="button" class="export-btn" id="resetInventoryFilters">
+                    Reset
+                </button>
+            </div>
 
-            <input
-                type="text"
-                id="searchInput"
-                placeholder="Search inventory..."
-            >
+            <div class="filters-grid">
+
+                <select id="inventoryShopFilter" aria-label="Filter inventory by shop">
+                    <option value="">
+                        All Shops
+                    </option>
+
+                    <option value="Shop 1">
+                        Shop 1
+                    </option>
+
+                    <option value="Shop 2">
+                        Shop 2
+                    </option>
+                </select>
+
+                <input
+                    type="date"
+                    id="inventoryDateFilter"
+                    aria-label="Filter inventory by date"
+                >
+
+                <select id="inventoryItemFilter" aria-label="Filter inventory by item">
+                    <option value="">
+                        All Items
+                    </option>
+                </select>
+
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Search inventory..."
+                >
+
+            </div>
 
         </section>
 
         <!-- SHOP 1 -->
-        <section class="inventory-section">
+        <section class="inventory-section" id="shop1Section">
 
             <div class="section-header">
                 <h2>Shop 1 Inventory</h2>
@@ -231,7 +266,7 @@
         </section>
 
         <!-- SHOP 2 -->
-        <section class="inventory-section">
+        <section class="inventory-section" id="shop2Section">
 
             <div class="section-header">
                 <h2>Shop 2 Inventory</h2>
@@ -378,7 +413,7 @@
 
     </main>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=20260518b"></script>
 
 </body>
 </html>

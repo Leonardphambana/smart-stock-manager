@@ -28,6 +28,13 @@ const saleQuantityInput = document.getElementById("saleQuantity");
 const salesClearPeriod = document.getElementById("salesClearPeriod");
 const clearSalesHistoryBtn = document.getElementById("clearSalesHistory");
 
+const shop1Section = document.getElementById("shop1Section");
+const shop2Section = document.getElementById("shop2Section");
+const inventoryShopFilter = document.getElementById("inventoryShopFilter");
+const inventoryDateFilter = document.getElementById("inventoryDateFilter");
+const inventoryItemFilter = document.getElementById("inventoryItemFilter");
+const resetInventoryFiltersBtn = document.getElementById("resetInventoryFilters");
+
 const stockTakeShop1Body = document.getElementById("stockTakeShop1Body");
 const stockTakeShop2Body = document.getElementById("stockTakeShop2Body");
 const stockTakeShop1Section = document.getElementById("stockTakeShop1Section");
@@ -61,6 +68,25 @@ if (salesForm) {
 
 if (searchInput) {
     searchInput.addEventListener("input", handleSearch);
+}
+
+if (inventoryShopFilter) {
+    inventoryShopFilter.addEventListener("change", function() {
+        populateInventoryItemFilter();
+        refreshViews();
+    });
+}
+
+if (inventoryDateFilter) {
+    inventoryDateFilter.addEventListener("change", refreshViews);
+}
+
+if (inventoryItemFilter) {
+    inventoryItemFilter.addEventListener("change", refreshViews);
+}
+
+if (resetInventoryFiltersBtn) {
+    resetInventoryFiltersBtn.addEventListener("click", resetInventoryFilters);
 }
 
 if (salesShopSelect) {
@@ -277,14 +303,8 @@ function addAdjustment(entry) {
 }
 
 function refreshViews() {
-    const term = searchInput ? searchInput.value.trim().toLowerCase() : "";
-    const visibleItems = term
-        ? inventory.filter(function(item) {
-            return item.name.toLowerCase().includes(term);
-        })
-        : inventory;
-
-    renderInventory(visibleItems);
+    populateInventoryItemFilter();
+    renderInventory(getInventoryFilteredItems());
     renderSalesHistory();
     renderAdjustmentHistory();
     updateDashboard();
@@ -710,6 +730,96 @@ function handleSearch() {
     refreshViews();
 }
 
+function getInventoryFilteredItems() {
+    const term = searchInput ? searchInput.value.trim().toLowerCase() : "";
+    const shop = inventoryShopFilter ? inventoryShopFilter.value : "";
+    const itemName = inventoryItemFilter ? inventoryItemFilter.value : "";
+    const date = inventoryDateFilter ? inventoryDateFilter.value : "";
+
+    return inventory.filter(function(item) {
+        if (term && !item.name.toLowerCase().includes(term)) {
+            return false;
+        }
+
+        if (shop && item.shop !== shop) {
+            return false;
+        }
+
+        if (itemName && item.name !== itemName) {
+            return false;
+        }
+
+        if (date) {
+            return formatDateKey(getLatestItemAdjustmentDate(item)) === date;
+        }
+
+        return true;
+    });
+}
+
+function populateInventoryItemFilter() {
+    if (!inventoryItemFilter) {
+        return;
+    }
+
+    const selectedItem = inventoryItemFilter.value;
+    const selectedShop = inventoryShopFilter ? inventoryShopFilter.value : "";
+    const names = [];
+
+    inventory.forEach(function(item) {
+        if (selectedShop && item.shop !== selectedShop) {
+            return;
+        }
+
+        if (!names.includes(item.name)) {
+            names.push(item.name);
+        }
+    });
+
+    names.sort(function(a, b) {
+        return a.localeCompare(b);
+    });
+
+    inventoryItemFilter.textContent = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "All Items";
+    inventoryItemFilter.appendChild(placeholder);
+
+    names.forEach(function(name) {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        inventoryItemFilter.appendChild(option);
+    });
+
+    if (names.includes(selectedItem)) {
+        inventoryItemFilter.value = selectedItem;
+    }
+}
+
+function resetInventoryFilters() {
+    if (inventoryShopFilter) {
+        inventoryShopFilter.value = "";
+    }
+
+    if (inventoryDateFilter) {
+        inventoryDateFilter.value = "";
+    }
+
+    if (inventoryItemFilter) {
+        inventoryItemFilter.value = "";
+    }
+
+    if (searchInput) {
+        searchInput.value = "";
+    }
+
+    populateInventoryItemFilter();
+    refreshViews();
+}
+
 /* =========================
    RENDER INVENTORY
 ========================= */
@@ -721,6 +831,16 @@ function renderInventory(items) {
 
     shop1Body.textContent = "";
     shop2Body.textContent = "";
+
+    const selectedShop = inventoryShopFilter ? inventoryShopFilter.value : "";
+
+    if (shop1Section) {
+        shop1Section.style.display = selectedShop === "Shop 2" ? "none" : "";
+    }
+
+    if (shop2Section) {
+        shop2Section.style.display = selectedShop === "Shop 1" ? "none" : "";
+    }
 
     items.forEach(function(item) {
         const row = document.createElement("tr");
