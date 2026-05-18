@@ -7,6 +7,7 @@ let salesHistory = [];
 let adjustmentHistory = [];
 let totalSalesAmount = 0;
 let editItemId = null;
+let showAllAdjustments = false;
 
 /* =========================
    DOM ELEMENTS
@@ -48,6 +49,7 @@ const shop1Body = document.getElementById("shop1Body");
 const shop2Body = document.getElementById("shop2Body");
 const salesHistoryBody = document.getElementById("salesHistoryBody");
 const adjustmentHistoryBody = document.getElementById("adjustmentHistoryBody");
+const toggleAdjustmentHistoryBtn = document.getElementById("toggleAdjustmentHistory");
 
 const totalProducts = document.getElementById("totalProducts");
 const stockValue = document.getElementById("stockValue");
@@ -114,6 +116,10 @@ if (stockTakeItemFilter) {
 
 if (resetStockTakeFiltersBtn) {
     resetStockTakeFiltersBtn.addEventListener("click", resetStockTakeFilters);
+}
+
+if (toggleAdjustmentHistoryBtn) {
+    toggleAdjustmentHistoryBtn.addEventListener("click", toggleAdjustmentHistory);
 }
 
 exportExcelBtns.forEach(function(button) {
@@ -1047,7 +1053,11 @@ function renderAdjustmentHistory() {
 
     adjustmentHistoryBody.textContent = "";
 
-    adjustmentHistory.forEach(function(entry) {
+    const visibleAdjustments = showAllAdjustments
+        ? adjustmentHistory
+        : adjustmentHistory.slice(0, 3);
+
+    visibleAdjustments.forEach(function(entry) {
         const row = document.createElement("tr");
 
         row.appendChild(createCell(entry.date));
@@ -1060,6 +1070,16 @@ function renderAdjustmentHistory() {
 
         adjustmentHistoryBody.appendChild(row);
     });
+
+    if (toggleAdjustmentHistoryBtn) {
+        toggleAdjustmentHistoryBtn.hidden = adjustmentHistory.length <= 3;
+        toggleAdjustmentHistoryBtn.textContent = showAllAdjustments ? "See Less" : "See More";
+    }
+}
+
+function toggleAdjustmentHistory() {
+    showAllAdjustments = !showAllAdjustments;
+    renderAdjustmentHistory();
 }
 
 /* =========================

@@ -10,7 +10,7 @@
 
     <title>Smart Stock Manager</title>
 
-    <link rel="stylesheet" href="style.css?v=20260518b">
+    <link rel="stylesheet" href="style.css?v=20260518c">
 </head>
 <body>
 
@@ -374,9 +374,15 @@
 
             <div class="section-header">
                 <h2>Stock Adjustment History</h2>
-                <button type="button" class="export-btn" data-export="adjustments">
-                    Export Excel
-                </button>
+                <div class="section-actions">
+                    <button type="button" class="export-btn" id="toggleAdjustmentHistory">
+                        See More
+                    </button>
+
+                    <button type="button" class="export-btn" data-export="adjustments">
+                        Export Excel
+                    </button>
+                </div>
             </div>
 
             <table>
@@ -413,7 +419,7 @@
 
     </main>
 
-    <script src="script.js?v=20260518b"></script>
+    <script src="script.js?v=20260518c"></script>
 
 </body>
 </html>
