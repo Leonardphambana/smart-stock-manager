@@ -113,6 +113,7 @@ body {
 }
 
 .form-container,
+.profile-section,
 .inventory-section {
     background: var(--surface);
     padding: 20px;
@@ -152,6 +153,48 @@ body {
     display: grid;
     grid-template-columns: repeat(3, minmax(160px, 1fr));
     gap: 12px;
+}
+
+.profile-status {
+    color: var(--muted);
+    margin-top: 6px;
+    font-size: 14px;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) repeat(3, auto);
+    gap: 10px;
+    align-items: center;
+}
+
+.firebase-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 10px;
+    align-items: center;
+}
+
+.import-profile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 12px;
+    border-radius: 8px;
+    background: var(--primary);
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.import-profile:hover {
+    background: var(--primary-dark);
+}
+
+.import-profile input {
+    display: none;
 }
 
 h2 {
@@ -309,7 +352,9 @@ tbody tr:hover {
 
     .dashboard,
     .forms-section,
-    .filters-grid {
+    .filters-grid,
+    .firebase-grid,
+    .profile-grid {
         grid-template-columns: 1fr;
     }
 }
@@ -334,6 +379,10 @@ tbody tr:hover {
     .section-actions,
     .section-actions select,
     .export-btn,
+    .firebase-grid button,
+    .firebase-grid input,
+    .profile-grid button,
+    .import-profile,
     .section-actions button {
         width: 100%;
     }

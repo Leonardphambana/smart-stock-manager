@@ -6,10 +6,29 @@ let inventory = [];
 let salesHistory = [];
 let adjustmentHistory = [];
 let totalSalesAmount = 0;
+let profileName = "My Stock Profile";
 let editItemId = null;
 let showAllAdjustments = false;
 let showAllShop1Inventory = false;
 let showAllShop2Inventory = false;
+let firebaseSettings = {
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+    appId: ""
+};
+let firebaseApp = null;
+let firebaseAuth = null;
+let firebaseDb = null;
+let firebaseUser = null;
+let firebaseUnsubscribe = null;
+let firebaseAuthUnsubscribe = null;
+let firebaseReady = false;
+let firebaseHydrating = false;
+let firebaseSaveTimer = null;
+let firebaseConfigSignature = "";
+let firebaseBootstrapPromise = null;
+let firebaseModulesPromise = null;
 
 /* =========================
    DOM ELEMENTS
@@ -54,6 +73,22 @@ const toggleShop2InventoryBtn = document.getElementById("toggleShop2Inventory");
 const salesHistoryBody = document.getElementById("salesHistoryBody");
 const adjustmentHistoryBody = document.getElementById("adjustmentHistoryBody");
 const toggleAdjustmentHistoryBtn = document.getElementById("toggleAdjustmentHistory");
+const firebaseStatus = document.getElementById("firebaseStatus");
+const firebaseApiKeyInput = document.getElementById("firebaseApiKey");
+const firebaseAuthDomainInput = document.getElementById("firebaseAuthDomain");
+const firebaseProjectIdInput = document.getElementById("firebaseProjectId");
+const firebaseAppIdInput = document.getElementById("firebaseAppId");
+const firebaseEmailInput = document.getElementById("firebaseEmail");
+const firebasePasswordInput = document.getElementById("firebasePassword");
+const saveFirebaseConfigBtn = document.getElementById("saveFirebaseConfig");
+const firebaseSignInBtn = document.getElementById("firebaseSignIn");
+const firebaseCreateAccountBtn = document.getElementById("firebaseCreateAccount");
+const firebaseSignOutBtn = document.getElementById("firebaseSignOut");
+const profileNameInput = document.getElementById("profileName");
+const profileStatus = document.getElementById("profileStatus");
+const saveProfileNameBtn = document.getElementById("saveProfileName");
+const exportProfileBtn = document.getElementById("exportProfile");
+const importProfileInput = document.getElementById("importProfile");
 
 const totalProducts = document.getElementById("totalProducts");
 const stockValue = document.getElementById("stockValue");
@@ -132,6 +167,38 @@ if (toggleShop1InventoryBtn) {
 
 if (toggleShop2InventoryBtn) {
     toggleShop2InventoryBtn.addEventListener("click", toggleShop2Inventory);
+}
+
+if (saveFirebaseConfigBtn) {
+    saveFirebaseConfigBtn.addEventListener("click", saveFirebaseConfig);
+}
+
+if (firebaseSignInBtn) {
+    firebaseSignInBtn.addEventListener("click", function() {
+        signInToFirebase(false);
+    });
+}
+
+if (firebaseCreateAccountBtn) {
+    firebaseCreateAccountBtn.addEventListener("click", function() {
+        signInToFirebase(true);
+    });
+}
+
+if (firebaseSignOutBtn) {
+    firebaseSignOutBtn.addEventListener("click", signOutFromFirebase);
+}
+
+if (saveProfileNameBtn) {
+    saveProfileNameBtn.addEventListener("click", saveProfileName);
+}
+
+if (exportProfileBtn) {
+    exportProfileBtn.addEventListener("click", exportProfile);
+}
+
+if (importProfileInput) {
+    importProfileInput.addEventListener("change", importProfile);
 }
 
 exportExcelBtns.forEach(function(button) {
@@ -337,9 +404,576 @@ function refreshViews() {
     renderSalesHistory();
     renderAdjustmentHistory();
     updateDashboard();
+    updateFirebasePanel();
+    updateProfilePanel();
     populateSalesDropdown();
     populateStockTakeItemFilter();
     renderStockTaking();
+}
+
+function loadFirebaseSettings() {
+    const savedSettings = localStorage.getItem("firebaseSettings");
+
+    if (!savedSettings) {
+        return;
+    }
+
+    try {
+        const parsed = JSON.parse(savedSettings);
+
+        firebaseSettings = {
+            apiKey: typeof parsed.apiKey === "string" ? parsed.apiKey : "",
+            authDomain: typeof parsed.authDomain === "string" ? parsed.authDomain : "",
+            projectId: typeof parsed.projectId === "string" ? parsed.projectId : "",
+            appId: typeof parsed.appId === "string" ? parsed.appId : ""
+        };
+    } catch (error) {
+        localStorage.removeItem("firebaseSettings");
+    }
+}
+
+function updateFirebasePanel(message) {
+    if (firebaseApiKeyInput) {
+        firebaseApiKeyInput.value = firebaseSettings.apiKey;
+    }
+
+    if (firebaseAuthDomainInput) {
+        firebaseAuthDomainInput.value = firebaseSettings.authDomain;
+    }
+
+    if (firebaseProjectIdInput) {
+        firebaseProjectIdInput.value = firebaseSettings.projectId;
+    }
+
+    if (firebaseAppIdInput) {
+        firebaseAppIdInput.value = firebaseSettings.appId;
+    }
+
+    if (!firebaseStatus) {
+        return;
+    }
+
+    if (message) {
+        firebaseStatus.textContent = message;
+        return;
+    }
+
+    if (!firebaseSettings.apiKey || !firebaseSettings.authDomain || !firebaseSettings.projectId || !firebaseSettings.appId) {
+        firebaseStatus.textContent = "Firebase not connected";
+        return;
+    }
+
+    if (firebaseUser) {
+        firebaseStatus.textContent = `Signed in as ${firebaseUser.email || firebaseUser.uid}`;
+        return;
+    }
+
+    firebaseStatus.textContent = "Firebase ready. Sign in to sync across gadgets.";
+}
+
+function getFirebaseConfigFromInputs() {
+    return {
+        apiKey: firebaseApiKeyInput ? firebaseApiKeyInput.value.trim() : "",
+        authDomain: firebaseAuthDomainInput ? firebaseAuthDomainInput.value.trim() : "",
+        projectId: firebaseProjectIdInput ? firebaseProjectIdInput.value.trim() : "",
+        appId: firebaseAppIdInput ? firebaseAppIdInput.value.trim() : ""
+    };
+}
+
+function hasFirebaseConfig(config) {
+    return Boolean(
+        config &&
+        config.apiKey &&
+        config.authDomain &&
+        config.projectId &&
+        config.appId
+    );
+}
+
+function saveFirebaseConfig() {
+    const config = getFirebaseConfigFromInputs();
+
+    if (!hasFirebaseConfig(config)) {
+        alert("Fill in the Firebase config fields first");
+        return;
+    }
+
+    firebaseSettings = config;
+    localStorage.setItem("firebaseSettings", JSON.stringify(firebaseSettings));
+    updateFirebasePanel("Firebase config saved");
+    initializeFirebaseBackend();
+}
+
+async function getFirebaseModules() {
+    if (!firebaseModulesPromise) {
+        firebaseModulesPromise = Promise.all([
+            import("https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js"),
+            import("https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js"),
+            import("https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js")
+        ]).then(function(modules) {
+            return {
+                app: {
+                    initializeApp: modules[0].initializeApp,
+                    deleteApp: modules[0].deleteApp
+                },
+                auth: {
+                    getAuth: modules[1].getAuth,
+                    setPersistence: modules[1].setPersistence,
+                    browserLocalPersistence: modules[1].browserLocalPersistence,
+                    onAuthStateChanged: modules[1].onAuthStateChanged,
+                    createUserWithEmailAndPassword: modules[1].createUserWithEmailAndPassword,
+                    signInWithEmailAndPassword: modules[1].signInWithEmailAndPassword,
+                    signOut: modules[1].signOut
+                },
+                firestore: {
+                    getFirestore: modules[2].getFirestore,
+                    doc: modules[2].doc,
+                    onSnapshot: modules[2].onSnapshot,
+                    setDoc: modules[2].setDoc
+                }
+            };
+        });
+    }
+
+    return firebaseModulesPromise;
+}
+
+async function initializeFirebaseBackend() {
+    if (firebaseBootstrapPromise) {
+        return firebaseBootstrapPromise;
+    }
+
+    firebaseBootstrapPromise = (async function() {
+        if (!hasFirebaseConfig(firebaseSettings)) {
+            updateFirebasePanel("Firebase not connected");
+            return;
+        }
+
+        let modules;
+
+        try {
+            modules = await getFirebaseModules();
+        } catch (error) {
+            updateFirebasePanel("Firebase SDK could not load");
+            return;
+        }
+
+        const configSignature = JSON.stringify(firebaseSettings);
+
+        if (firebaseApp && firebaseConfigSignature !== configSignature && modules.app.deleteApp) {
+            if (firebaseAuthUnsubscribe) {
+                firebaseAuthUnsubscribe();
+                firebaseAuthUnsubscribe = null;
+            }
+            await modules.app.deleteApp(firebaseApp);
+            firebaseApp = null;
+            firebaseAuth = null;
+            firebaseDb = null;
+            firebaseUser = null;
+            if (firebaseUnsubscribe) {
+                firebaseUnsubscribe();
+                firebaseUnsubscribe = null;
+            }
+        }
+
+        if (!firebaseApp) {
+            firebaseApp = modules.app.initializeApp(firebaseSettings);
+            firebaseConfigSignature = configSignature;
+            firebaseAuth = modules.auth.getAuth(firebaseApp);
+            firebaseDb = modules.firestore.getFirestore(firebaseApp);
+
+            await modules.auth.setPersistence(
+                firebaseAuth,
+                modules.auth.browserLocalPersistence
+            );
+
+            firebaseAuthUnsubscribe = modules.auth.onAuthStateChanged(
+                firebaseAuth,
+                handleFirebaseAuthState
+            );
+        }
+
+        updateFirebasePanel();
+    })();
+
+    try {
+        await firebaseBootstrapPromise;
+    } finally {
+        firebaseBootstrapPromise = null;
+    }
+}
+
+function cleanupFirebaseProfileListener() {
+    if (firebaseUnsubscribe) {
+        firebaseUnsubscribe();
+        firebaseUnsubscribe = null;
+    }
+}
+
+function getFirebaseProfileRef(modules) {
+    return modules.firestore.doc(firebaseDb, "profiles", firebaseUser.uid);
+}
+
+function applyFirebaseProfileSnapshot(data) {
+    firebaseHydrating = true;
+
+    try {
+        profileName = typeof data.profileName === "string" && data.profileName.trim()
+            ? data.profileName.trim()
+            : "My Stock Profile";
+
+        inventory = Array.isArray(data.inventory)
+            ? data.inventory.map(function(item) {
+                return {
+                    id: item.id || createId(),
+                    shop: item.shop,
+                    name: item.name,
+                    quantity: Number(item.quantity),
+                    price: getSavedItemPrice(item)
+                };
+            })
+            : [];
+
+        salesHistory = Array.isArray(data.salesHistory)
+            ? data.salesHistory.map(function(sale) {
+                return {
+                    id: sale.id || createId(),
+                    shop: sale.shop,
+                    item: sale.item,
+                    quantity: Number(sale.quantity),
+                    amount: Number(sale.amount),
+                    date: sale.date,
+                    timestamp: Number.isFinite(Number(sale.timestamp)) ? Number(sale.timestamp) : null
+                };
+            })
+            : [];
+
+        adjustmentHistory = Array.isArray(data.adjustmentHistory)
+            ? data.adjustmentHistory.map(function(entry) {
+                return {
+                    id: entry.id || createId(),
+                    date: entry.date,
+                    type: entry.type,
+                    shop: entry.shop,
+                    item: entry.item,
+                    previousQuantity: Number(entry.previousQuantity),
+                    newQuantity: Number(entry.newQuantity),
+                    note: entry.note,
+                    timestamp: Number.isFinite(Number(entry.timestamp)) ? Number(entry.timestamp) : null
+                };
+            })
+            : [];
+
+        if (typeof data.totalSalesAmount === "number" && Number.isFinite(data.totalSalesAmount)) {
+            totalSalesAmount = data.totalSalesAmount;
+        } else {
+            updateTotalSalesAmount();
+        }
+
+        persistLocalData();
+        refreshViews();
+    } finally {
+        firebaseHydrating = false;
+    }
+}
+
+function seedFirebaseProfileIfEmpty(modules) {
+    const profileRef = getFirebaseProfileRef(modules);
+
+    return modules.firestore.setDoc(profileRef, getFirebaseProfileData());
+}
+
+function handleFirebaseProfileSnapshot(modules) {
+    cleanupFirebaseProfileListener();
+
+    const profileRef = getFirebaseProfileRef(modules);
+
+    firebaseReady = false;
+    firebaseUnsubscribe = modules.firestore.onSnapshot(
+        profileRef,
+        function(snapshot) {
+            if (snapshot.exists()) {
+                applyFirebaseProfileSnapshot(snapshot.data());
+                firebaseReady = true;
+                updateFirebasePanel();
+                return;
+            }
+
+            firebaseReady = true;
+            seedFirebaseProfileIfEmpty(modules).catch(function(error) {
+                updateFirebasePanel(`Firebase sync failed: ${error.message}`);
+            });
+            updateFirebasePanel();
+        },
+        function(error) {
+            firebaseReady = false;
+            updateFirebasePanel(`Firebase sync failed: ${error.message}`);
+        }
+    );
+}
+
+function handleFirebaseAuthState(user) {
+    firebaseUser = user || null;
+
+    if (!user) {
+        firebaseReady = false;
+        cleanupFirebaseProfileListener();
+        updateFirebasePanel();
+        return;
+    }
+
+    getFirebaseModules()
+        .then(function(modules) {
+            handleFirebaseProfileSnapshot(modules);
+            updateFirebasePanel();
+        })
+        .catch(function(error) {
+            updateFirebasePanel(`Firebase sync failed: ${error.message}`);
+        });
+}
+
+function scheduleFirebaseSave() {
+    if (!firebaseReady || firebaseHydrating || !firebaseUser || !firebaseDb) {
+        return;
+    }
+
+    if (firebaseSaveTimer) {
+        clearTimeout(firebaseSaveTimer);
+    }
+
+    firebaseSaveTimer = setTimeout(function() {
+        persistFirebaseProfile().catch(function(error) {
+            updateFirebasePanel(`Firebase sync failed: ${error.message}`);
+        });
+    }, 350);
+}
+
+async function persistFirebaseProfile() {
+    if (!firebaseReady || firebaseHydrating || !firebaseUser || !firebaseDb) {
+        return;
+    }
+
+    const modules = await getFirebaseModules();
+    const profileRef = getFirebaseProfileRef(modules);
+
+    await modules.firestore.setDoc(profileRef, {
+        ...getFirebaseProfileData(),
+        ownerEmail: firebaseUser.email || "",
+        updatedAt: new Date().toISOString()
+    });
+
+    updateFirebasePanel(`Signed in as ${firebaseUser.email || firebaseUser.uid}`);
+}
+
+async function signInToFirebase(createAccount) {
+    const config = getFirebaseConfigFromInputs();
+
+    if (!hasFirebaseConfig(config)) {
+        alert("Save the Firebase config first");
+        return;
+    }
+
+    firebaseSettings = config;
+    localStorage.setItem("firebaseSettings", JSON.stringify(firebaseSettings));
+
+    const email = firebaseEmailInput ? firebaseEmailInput.value.trim() : "";
+    const password = firebasePasswordInput ? firebasePasswordInput.value : "";
+
+    if (!email || !password) {
+        alert("Enter an email and password");
+        return;
+    }
+
+    try {
+        await initializeFirebaseBackend();
+        const modules = await getFirebaseModules();
+
+        if (createAccount) {
+            await modules.auth.createUserWithEmailAndPassword(firebaseAuth, email, password);
+        } else {
+            await modules.auth.signInWithEmailAndPassword(firebaseAuth, email, password);
+        }
+
+        updateFirebasePanel(`Signed in as ${email}`);
+    } catch (error) {
+        updateFirebasePanel(`Firebase auth failed: ${error.message}`);
+    }
+}
+
+async function signOutFromFirebase() {
+    try {
+        const modules = await getFirebaseModules();
+
+        if (firebaseAuth) {
+            await modules.auth.signOut(firebaseAuth);
+        }
+    } catch (error) {
+        updateFirebasePanel(`Firebase sign-out failed: ${error.message}`);
+    }
+}
+
+function getFirebaseProfileData() {
+    return {
+        app: "smart-stock-manager",
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        profileName,
+        inventory,
+        salesHistory,
+        adjustmentHistory,
+        totalSalesAmount
+    };
+}
+
+function persistLocalData() {
+    localStorage.setItem("profileName", profileName);
+    localStorage.setItem("inventory", JSON.stringify(inventory));
+    localStorage.setItem("salesHistory", JSON.stringify(salesHistory));
+    localStorage.setItem("adjustmentHistory", JSON.stringify(adjustmentHistory));
+    localStorage.setItem("totalSalesAmount", totalSalesAmount);
+}
+
+/* =========================
+   PROFILE TRANSFER
+========================= */
+
+function getProfileData() {
+    return {
+        app: "smart-stock-manager",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        profileName,
+        inventory,
+        salesHistory,
+        adjustmentHistory,
+        totalSalesAmount
+    };
+}
+
+function getProfileFileName() {
+    const safeName = profileName
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "stock-profile";
+
+    return `${safeName}-backup.json`;
+}
+
+function updateProfilePanel() {
+    if (profileNameInput) {
+        profileNameInput.value = profileName;
+    }
+
+    if (profileStatus) {
+        profileStatus.textContent = `Current profile: ${profileName}`;
+    }
+}
+
+function saveProfileName() {
+    const nextName = profileNameInput ? profileNameInput.value.trim() : "";
+
+    if (!nextName) {
+        alert("Enter a profile name");
+        return;
+    }
+
+    profileName = nextName;
+    saveData();
+    updateProfilePanel();
+}
+
+function exportProfile() {
+    const blob = new Blob(
+        [JSON.stringify(getProfileData(), null, 2)],
+        { type: "application/json" }
+    );
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    link.download = getProfileFileName();
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(link.href);
+}
+
+function normalizeProfileArray(value) {
+    return Array.isArray(value) ? value : [];
+}
+
+function applyProfileData(data) {
+    if (!data || data.app !== "smart-stock-manager") {
+        alert("This is not a Smart Stock Manager profile file");
+        return;
+    }
+
+    profileName = typeof data.profileName === "string" && data.profileName.trim()
+        ? data.profileName.trim()
+        : "Imported Stock Profile";
+
+    inventory = normalizeProfileArray(data.inventory).map(function(item) {
+        return {
+            id: item.id || createId(),
+            shop: item.shop,
+            name: item.name,
+            quantity: Number(item.quantity),
+            price: getSavedItemPrice(item)
+        };
+    });
+
+    salesHistory = normalizeProfileArray(data.salesHistory).map(function(sale) {
+        return {
+            id: sale.id || createId(),
+            shop: sale.shop,
+            item: sale.item,
+            quantity: Number(sale.quantity),
+            amount: Number(sale.amount),
+            date: sale.date,
+            timestamp: Number.isFinite(Number(sale.timestamp)) ? Number(sale.timestamp) : null
+        };
+    });
+
+    adjustmentHistory = normalizeProfileArray(data.adjustmentHistory).map(function(entry) {
+        return {
+            id: entry.id || createId(),
+            date: entry.date,
+            type: entry.type,
+            shop: entry.shop,
+            item: entry.item,
+            previousQuantity: Number(entry.previousQuantity),
+            newQuantity: Number(entry.newQuantity),
+            note: entry.note,
+            timestamp: Number.isFinite(Number(entry.timestamp)) ? Number(entry.timestamp) : null
+        };
+    });
+
+    updateTotalSalesAmount();
+    saveData();
+    refreshViews();
+    alert("Profile imported successfully");
+}
+
+function importProfile(event) {
+    const file = event.target.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.addEventListener("load", function() {
+        try {
+            applyProfileData(JSON.parse(reader.result));
+        } catch (error) {
+            alert("Could not read this profile file");
+        }
+
+        event.target.value = "";
+    });
+
+    reader.readAsText(file);
 }
 
 /* =========================
@@ -1464,10 +2098,11 @@ function balanceStock(id, actualInput) {
 ========================= */
 
 function saveData() {
-    localStorage.setItem("inventory", JSON.stringify(inventory));
-    localStorage.setItem("salesHistory", JSON.stringify(salesHistory));
-    localStorage.setItem("adjustmentHistory", JSON.stringify(adjustmentHistory));
-    localStorage.setItem("totalSalesAmount", totalSalesAmount);
+    persistLocalData();
+
+    if (!firebaseHydrating && firebaseReady && firebaseUser && firebaseDb) {
+        scheduleFirebaseSave();
+    }
 }
 
 /* =========================
@@ -1475,10 +2110,17 @@ function saveData() {
 ========================= */
 
 function loadData() {
+    loadFirebaseSettings();
+
+    const savedProfileName = localStorage.getItem("profileName");
     const savedInventory = localStorage.getItem("inventory");
     const savedSales = localStorage.getItem("salesHistory");
     const savedAdjustments = localStorage.getItem("adjustmentHistory");
     const savedTotal = localStorage.getItem("totalSalesAmount");
+
+    if (savedProfileName && savedProfileName.trim()) {
+        profileName = savedProfileName.trim();
+    }
 
     if (savedInventory) {
         inventory = JSON.parse(savedInventory).map(function(item) {
@@ -1528,7 +2170,7 @@ function loadData() {
         totalSalesAmount = Number(savedTotal);
     }
 
-    saveData();
+    persistLocalData();
     refreshViews();
 }
 
@@ -1537,3 +2179,4 @@ function loadData() {
 ========================= */
 
 loadData();
+initializeFirebaseBackend();

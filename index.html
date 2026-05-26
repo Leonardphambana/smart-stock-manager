@@ -64,6 +64,124 @@
 
         </section>
 
+        <!-- FIREBASE SYNC -->
+        <section class="profile-section">
+
+            <div class="section-header">
+                <div>
+                    <h2>Firebase Sync</h2>
+                    <p id="firebaseStatus" class="profile-status">
+                        Firebase not connected
+                    </p>
+                </div>
+            </div>
+
+            <div class="firebase-grid">
+
+                <input
+                    type="text"
+                    id="firebaseApiKey"
+                    aria-label="Firebase API key"
+                    placeholder="Firebase API key"
+                >
+
+                <input
+                    type="text"
+                    id="firebaseAuthDomain"
+                    aria-label="Firebase auth domain"
+                    placeholder="Firebase auth domain"
+                >
+
+                <input
+                    type="text"
+                    id="firebaseProjectId"
+                    aria-label="Firebase project id"
+                    placeholder="Firebase project id"
+                >
+
+                <input
+                    type="text"
+                    id="firebaseAppId"
+                    aria-label="Firebase app id"
+                    placeholder="Firebase app id"
+                >
+
+                <input
+                    type="email"
+                    id="firebaseEmail"
+                    aria-label="Firebase email"
+                    placeholder="Email"
+                >
+
+                <input
+                    type="password"
+                    id="firebasePassword"
+                    aria-label="Firebase password"
+                    placeholder="Password"
+                >
+
+                <button type="button" id="saveFirebaseConfig">
+                    Save Config
+                </button>
+
+                <button type="button" class="export-btn" id="firebaseSignIn">
+                    Sign In
+                </button>
+
+                <button type="button" class="export-btn" id="firebaseCreateAccount">
+                    Create Account
+                </button>
+
+                <button type="button" class="delete-btn" id="firebaseSignOut">
+                    Sign Out
+                </button>
+
+            </div>
+
+        </section>
+
+        <!-- PROFILE TRANSFER -->
+        <section class="profile-section">
+
+            <div class="section-header">
+                <div>
+                    <h2>Profile Access</h2>
+                    <p id="profileStatus" class="profile-status">
+                        Current profile: My Stock Profile
+                    </p>
+                </div>
+            </div>
+
+            <div class="profile-grid">
+
+                <input
+                    type="text"
+                    id="profileName"
+                    aria-label="Profile name"
+                    placeholder="Profile name"
+                >
+
+                <button type="button" id="saveProfileName">
+                    Save Name
+                </button>
+
+                <button type="button" class="export-btn" id="exportProfile">
+                    Export Profile
+                </button>
+
+                <label class="import-profile">
+                    Import Profile
+                    <input
+                        type="file"
+                        id="importProfile"
+                        accept="application/json,.json"
+                    >
+                </label>
+
+            </div>
+
+        </section>
+
         <!-- FORMS -->
         <section class="forms-section">
 
