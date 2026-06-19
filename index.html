@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modern To-Do List</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="todo-card" aria-labelledby="app-title">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Daily Focus</p>
+          <h1 id="app-title">To-Do List</h1>
+        </div>
+        <button class="clear-button" id="clearAllButton" type="button">Clear All</button>
+      </header>
+
+      <form class="task-form" id="taskForm" autocomplete="off">
+        <div class="task-main-field">
+          <label class="sr-only" for="taskInput">Task description</label>
+          <input
+            id="taskInput"
+            class="task-input"
+            type="text"
+            placeholder="Add a task..."
+            maxlength="120"
+            aria-label="Task description"
+          >
+        </div>
+
+        <div class="schedule-fields">
+          <label class="field-label" for="taskDate">
+            Date
+            <input id="taskDate" class="schedule-input" type="date" aria-label="Task date">
+          </label>
+
+          <label class="field-label" for="taskTime">
+            Time
+            <input id="taskTime" class="schedule-input" type="time" aria-label="Task time">
+          </label>
+
+          <label class="reminder-option" for="taskReminder">
+            <input id="taskReminder" type="checkbox">
+            <span>Reminder</span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button class="add-button" id="submitTaskButton" type="submit">Add</button>
+          <button class="cancel-button" id="cancelEditButton" type="button" hidden>Cancel</button>
+        </div>
+      </form>
+
+      <div class="task-stats" aria-live="polite">
+        <span><strong id="totalTasks">0</strong> Total</span>
+        <span><strong id="completedTasks">0</strong> Completed</span>
+        <span><strong id="remainingTasks">0</strong> Remaining</span>
+      </div>
+
+      <ul class="task-list" id="taskList" aria-label="Tasks"></ul>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
